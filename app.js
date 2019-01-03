@@ -2,6 +2,10 @@ const express = require('express');
 const multer = require('multer');
 const ejs = require('ejs');
 const path = require('path');
+const mongoose = require('mongoose');
+const Image = require('./model/image');
+mongoose.connect('uri', { useNewUrlParser: true });
+const db = mongoose.connection;
 const storage = multer.diskStorage({
     destination: './public/upload/',
     filename: (req, file, cb) => {
@@ -46,14 +50,36 @@ app.post('/upload', (req, res) => {
                 });
             }
             else {
-                res.render('index', {
-                    msg: 'Image uploaded successfully',
-                    file: `upload/${req.file.filename}`
-                });
+                let image = new Image();
+                image.image = req.file.filename;
+                image.save(() => {
+                    if (err) {
+                        throw err;
+                    }
+                    else {
+                        res.render('index', {
+                            msg: 'Image uploaded successfully',
+                            file: `upload/${req.file.filename}`
+                        });
+                    }
+                })
+
             }
         }
     })
 
+});
+app.get('/upload', (req, res) => {
+    Image.find({}, (err, images) => {
+        if (err) {
+            console.log(err);
+        } else {
+
+            res.render('upload', {
+                images: images
+            });
+        }
+    });
 });
 
 
